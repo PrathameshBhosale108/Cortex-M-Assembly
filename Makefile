@@ -37,18 +37,18 @@ qemu: $(PROJECT).elf
 	        -gdb tcp::1234
 
 # -------------------------------------------------
-# ELF generation
+# ELF + analysis artifacts
 # -------------------------------------------------
 $(PROJECT).elf: $(PROJECT).o
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
-	$(OBJDUMP) -D -S $@ > $(PROJECT).lst
-	$(READELF) -a $@ > $(PROJECT).debug
+	$(OBJDUMP) -D -S $@ > $(PROJECT).elf.lst
+	$(READELF) -a $@ > $(PROJECT).elf.debug
 
 $(PROJECT).o: $(PROJECT).S
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # -------------------------------------------------
-# GDB attach (run in a second terminal)
+# GDB attach (second terminal)
 # -------------------------------------------------
 gdb:
 	$(GDB) -q $(PROJECT).elf \
@@ -58,4 +58,4 @@ gdb:
 # Cleanup
 # -------------------------------------------------
 clean:
-	rm -f *.o *.elf *.lst *.debug
+	rm -f *.o *.elf *.elf.lst *.elf.debug
