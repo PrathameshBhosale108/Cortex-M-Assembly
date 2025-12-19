@@ -1,16 +1,61 @@
+# -------------------------------------------------
+# Project configuration
+# -------------------------------------------------
 PROJECT = first
-CPU ?= cortex-m3
-BOARD ?= stm32vldiscovery
+CPU     = cortex-m3
+BOARD   = stm32vldiscovery
 
-qemu:
-	arm-none-eabi-as -mmthumb -mcpu=$(CPU) -ggdb -c first.S -o first.o
-	arm-none-eabi-ld -Tmap.ld first.o -o first.elf
-	arm-none-eabi-objdump -D -S first.elf > first.elf.lst
-	arm-none-eabi-readelf -a first.elf > first.elf.debug 
-	arm-none-eabi-arm -S -M $(BOARD) -cpu $(CPU) -nographic -kernel $(PROJECT).elf -gdb tcp::1234
+# -------------------------------------------------
+# Toolchain
+# -------------------------------------------------
+CC      = arm-none-eabi-gcc
+OBJDUMP = arm-none-eabi-objdump
+READELF = arm-none-eabi-readelf
+GDB     = gdb-multiarch
+QEMU    = qemu-system-arm
 
+# -------------------------------------------------
+# Flags
+# -------------------------------------------------
+CFLAGS  = -mcpu=$(CPU) -mthumb -g -Wall -ffreestanding -nostdlib
+LDFLAGS = -T map.ld -nostdlib
+
+# -------------------------------------------------
+# Default target
+# -------------------------------------------------
+all: qemu
+
+# -------------------------------------------------
+# Build + run in QEMU (paused, GDB ready)
+# -------------------------------------------------
+qemu: $(PROJECT).elf
+	$(QEMU) -S \
+	        -M $(BOARD) \
+	        -cpu $(CPU) \
+	        -nographic \
+	        -kernel $(PROJECT).elf \
+	        -gdb tcp::1234
+
+# -------------------------------------------------
+# ELF generation
+# -------------------------------------------------
+$(PROJECT).elf: $(PROJECT).o
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(OBJDUMP) -D -S $@ > $(PROJECT).lst
+	$(READELF) -a $@ > $(PROJECT).debug
+
+$(PROJECT).o: $(PROJECT).S
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# -------------------------------------------------
+# GDB attach (run in a second terminal)
+# -------------------------------------------------
 gdb:
-	gdb-multiarch -q $(PROJECT).elf -ex "target remote localhost:1234"
+	$(GDB) -q $(PROJECT).elf \
+	       -ex "target remote localhost:1234"
 
+# -------------------------------------------------
+# Cleanup
+# -------------------------------------------------
 clean:
-	rm -rf *.out *.elf .gdb_history *.lst *.debug *.o 
+	rm -f *.o *.elf *.lst *.debug

@@ -1,12 +1,12 @@
 .section .vectors
 vector_table:
     .word 0xABC0
-    .word reset_handler
+    .word reset_handler  // NAME REPRESENTING A MEMORY LOCATION
     .zero 400
 
     .section .text
     .align 1
-    .type reset_handler, %function
+    .type reset_handler, %function    //  EVERYTHING ABOVE IS CALLED AS DIRECTIVE
 reset_handler:
     MOV R1,#0x01
     MOV R2,#0x2
